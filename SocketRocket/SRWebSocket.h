@@ -17,29 +17,36 @@
 #import <Foundation/Foundation.h>
 #import <Security/SecCertificate.h>
 
-typedef enum {
-    SR_CONNECTING   = 0,
-    SR_OPEN         = 1,
-    SR_CLOSING      = 2,
-    SR_CLOSED       = 3,
+typedef enum
+{
+  SR_CONNECTING = 0,
+  SR_OPEN = 1,
+  SR_CLOSING = 2,
+  SR_CLOSED = 3,
 } SRReadyState;
 
 @class SRWebSocket;
 
 extern NSString *const SRWebSocketErrorDomain;
 
+
 #pragma mark - SRWebSocketDelegate
 
 @protocol SRWebSocketDelegate;
 
+
 #pragma mark - SRWebSocket
 
-@interface SRWebSocket : NSObject <NSStreamDelegate>
+@interface SRWebSocket: NSObject<NSStreamDelegate>
 
-@property (nonatomic, assign) id <SRWebSocketDelegate> delegate;
+@property (nonatomic, weak) id<SRWebSocketDelegate> delegate;
 
 @property (nonatomic, readonly) SRReadyState readyState;
-@property (nonatomic, readonly, retain) NSURL *url;
+@property (nonatomic, readonly, strong) NSURL *url;
+
+@property (nonatomic) NSTimeInterval writeTimeout;
+@property (nonatomic) NSTimeInterval idleTimeoutInterval;
+@property (nonatomic) BOOL useIdleTimeout;
 
 // This returns the negotiated protocol.
 // It will be nil until after the handshake completes.
@@ -55,8 +62,8 @@ extern NSString *const SRWebSocketErrorDomain;
 
 // Delegate queue will be dispatch_main_queue by default.
 // You cannot set both OperationQueue and dispatch_queue.
-- (void)setDelegateOperationQueue:(NSOperationQueue*) queue;
-- (void)setDelegateDispatchQueue:(dispatch_queue_t) queue;
+@property (nonatomic) NSOperationQueue *delegateOperationQueue;
+@property (nonatomic) dispatch_queue_t delegateDispatchQueue;
 
 // By default, it will schedule itself on +[NSRunLoop SR_networkRunLoop] using defaultModes.
 - (void)scheduleInRunLoop:(NSRunLoop *)aRunLoop forMode:(NSString *)mode;
@@ -71,11 +78,14 @@ extern NSString *const SRWebSocketErrorDomain;
 // Send a UTF8 String or Data.
 - (void)send:(id)data;
 
+- (void)sendPing;
+
 @end
+
 
 #pragma mark - SRWebSocketDelegate
 
-@protocol SRWebSocketDelegate <NSObject>
+@protocol SRWebSocketDelegate<NSObject>
 
 // message will either be an NSString if the server is using text
 // or NSData if the server is using binary.
@@ -89,6 +99,7 @@ extern NSString *const SRWebSocketErrorDomain;
 
 @end
 
+
 #pragma mark - NSURLRequest (CertificateAdditions)
 
 @interface NSURLRequest (CertificateAdditions)
@@ -97,6 +108,7 @@ extern NSString *const SRWebSocketErrorDomain;
 
 @end
 
+
 #pragma mark - NSMutableURLRequest (CertificateAdditions)
 
 @interface NSMutableURLRequest (CertificateAdditions)
@@ -104,6 +116,7 @@ extern NSString *const SRWebSocketErrorDomain;
 @property (nonatomic, retain) NSArray *SR_SSLPinnedCertificates;
 
 @end
+
 
 #pragma mark - NSRunLoop (SRWebSocket)
 
